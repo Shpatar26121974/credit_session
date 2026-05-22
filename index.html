@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Розклад заліків  — ННІІФТКН ЧНУ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@300;400;600;800&family=Geologica:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0f1a;
+    --surface: #111827;
+    --surface2: #1a2236;
+    --border: #1e2d47;
+    --accent: #3b82f6;
+    --accent2: #60a5fa;
+    --accent-glow: rgba(59,130,246,0.18);
+    --text: #e8eef8;
+    --text-muted: #8899b4;
+    --text-dim: #4a5e7a;
+    --green: #34d399;
+    --yellow: #fbbf24;
+    --red: #f87171;
+    --purple: #a78bfa;
+    --radius: 12px;
+    --radius-sm: 8px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Geologica', sans-serif;
+    font-weight: 300;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(59,130,246,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(59,130,246,0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Header */
+  header {
+    padding: 48px 0 32px;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+
+  .header-glow {
+    position: absolute;
+    top: -80px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 600px;
+    height: 200px;
+    background: radial-gradient(ellipse, rgba(59,130,246,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .uni-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .uni-badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    background: var(--accent);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  h1 {
+    font-family: 'Unbounded', sans-serif;
+    font-size: clamp(22px, 4vw, 42px);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #e8eef8 0%, #60a5fa 60%, #a78bfa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 10px;
+  }
+
+  .subtitle {
+    color: var(--text-muted);
+    font-size: 13px;
+    letter-spacing: 0.02em;
+  }
+
+  /* Controls */
+  .controls {
+    padding: 28px 0;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .search-wrap {
+    flex: 1;
+    min-width: 220px;
+    position: relative;
+  }
+
+  .search-wrap svg {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-dim);
+    pointer-events: none;
+  }
+
+  input[type="search"] {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: 'Geologica', sans-serif;
+    font-size: 14px;
+    padding: 10px 14px 10px 40px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  input[type="search"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-glow);
+  }
+
+  input[type="search"]::placeholder { color: var(--text-dim); }
+
+  .filter-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    color: var(--text-muted);
+    font-family: 'Geologica', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 7px 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .chip:hover { border-color: var(--accent2); color: var(--accent2); }
+  .chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* Stats */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    padding: 24px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    transition: border-color 0.2s;
+  }
+
+  .stat-card:hover { border-color: var(--accent); }
+
+  .stat-num {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--accent2);
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  /* Section tabs */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    padding: 20px 0 0;
+    overflow-x: auto;
+  }
+
+  .tab {
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+    border-bottom: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-family: 'Geologica', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 10px 18px;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .tab:hover { color: var(--text); border-color: var(--accent); }
+  .tab.active { background: var(--surface); color: var(--accent2); border-color: var(--accent); }
+
+  /* Main content */
+  .main {
+    padding: 0 0 60px;
+  }
+
+  .section-panel {
+    display: none;
+    background: var(--surface);
+    border: 1px solid var(--accent);
+    border-top: none;
+    border-radius: 0 var(--radius) var(--radius) var(--radius);
+    padding: 24px;
+    animation: fadeIn 0.25s ease;
+  }
+
+  .section-panel.active { display: block; }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Group header */
+  .group-block {
+    margin-bottom: 32px;
+  }
+
+  .group-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .group-title {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: 0.04em;
+  }
+
+  .group-code {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--accent2);
+    font-size: 11px;
+    font-weight: 600;
+    font-family: 'Unbounded', sans-serif;
+    padding: 3px 10px;
+  }
+
+  .group-line {
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* Schedule grid */
+  .schedule-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 10px;
+  }
+
+  .event-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    transition: all 0.2s;
+    cursor: default;
+  }
+
+  .event-card:hover {
+    border-color: var(--accent);
+    background: var(--surface2);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  }
+
+  .event-card.hidden { display: none; }
+
+  .event-date {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    min-width: 52px;
+    text-align: center;
+    padding: 8px 6px;
+    flex-shrink: 0;
+  }
+
+  .event-date .day {
+    font-family: 'Unbounded', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--accent2);
+    line-height: 1;
+  }
+
+  .event-date .month {
+    font-size: 10px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 2px;
+  }
+
+  .event-date .time {
+    font-size: 11px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  .event-info { flex: 1; min-width: 0; }
+
+  .event-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.4;
+    margin-bottom: 6px;
+  }
+
+  .event-teacher {
+    font-size: 11px;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .event-teacher::before {
+    content: '';
+    display: inline-block;
+    width: 14px; height: 14px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%238899b4' stroke-width='2'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='12' cy='7' r='4'/%3E%3C/svg%3E") center/contain no-repeat;
+    flex-shrink: 0;
+  }
+
+  .today-badge {
+    background: var(--green);
+    color: #000;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+  }
+
+  .soon-badge {
+    background: var(--yellow);
+    color: #000;
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+  }
+
+  .past-card { opacity: 0.45; }
+
+  /* Empty state */
+  .empty-state {
+    text-align: center;
+    padding: 48px;
+    color: var(--text-dim);
+    font-size: 14px;
+  }
+
+  .no-results {
+    text-align: center;
+    padding: 32px;
+    color: var(--text-dim);
+    font-size: 13px;
+    display: none;
+  }
+
+  /* Footer */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 24px 0;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 12px;
+    position: relative;
+    z-index: 1;
+  }
+
+  footer a { color: var(--accent2); text-decoration: none; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+  @media (max-width: 600px) {
+    .schedule-grid { grid-template-columns: 1fr; }
+    h1 { font-size: 20px; }
+    .tab { font-size: 11px; padding: 8px 12px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <header>
+    <div class="header-glow"></div>
+    <div class="uni-badge">ЧНУ ім. Ю. Федьковича · ННІІФТКН · 2025–2026</div>
+    <h1>Розклад залікової  сесії</h1>
+    <p class="subtitle">Навчально-науковий інститут фізико-технічних та комп'ютерних наук&nbsp;·&nbsp;Денна форма навчання</p>
+  </header>
+
+  <div class="controls">
+    <div class="search-wrap">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input type="search" id="search" placeholder="Пошук предмету, викладача, групи…">
+    </div>
+    <div class="filter-group" id="monthFilter">
+      <button class="chip active" data-month="all">Всі дати</button>
+      <button class="chip" data-month="3">Березень</button>
+      <button class="chip" data-month="4">Квітень</button>
+      <button class="chip" data-month="5">Травень</button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-num" id="statTotal">0</div>
+      <div class="stat-label">Усього заліків</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statGroups">0</div>
+      <div class="stat-label">Груп/потоків</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statToday">0</div>
+      <div class="stat-label">Сьогодні</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statSoon">0</div>
+      <div class="stat-label">Найближчі 3 дні</div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="tabs" id="tabs"></div>
+    <div id="panels"></div>
+    <div class="no-results" id="noResults">Нічого не знайдено за вашим запитом</div>
+  </div>
+
+</div>
+
+<footer>
+  <div class="container">
+    ННІІФТКН ЧНУ ім. Ю. Федьковича &nbsp;·&nbsp; 4 семестр 2025–2026 н.р. &nbsp;·&nbsp;
+    Директор інституту/декан Петро Шпатар
+  </div>
+</footer>
+
+<script>
+// ====== DATA ======
+const SECTIONS = [
+  {
+    id: 'bachelor1',
+    label: '1 курс Бакалавр',
+    sublabel: '2 семестр',
+    groups: [
+      {
+        name: 'Видавництво та поліграфія',
+        code: '126',
+        events: [
+          { subject: 'Іноземна мова (за проф. спрямуванням)', teacher: 'Гіков Л.В.', date: '28.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Інженерія ІКС та ІоТ',
+        code: '121',
+        events: [
+          { subject: 'Іноземна мова (за проф. спрямуванням)', teacher: 'Гіков Л.В.', date: '28.05', time: '09:00' },
+          { subject: 'Основи інфокомунікацій', teacher: 'Гресь О.В.', date: '27.05', time: '09:00' },
+          { subject: 'Ознайомча практика', teacher: '', date: '22.04', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Телекомунікації',
+        code: '124',
+        events: [
+          { subject: 'Іноземна мова (за проф. спрямуванням)', teacher: 'Гіков Л.В.', date: '28.05', time: '09:00' },
+          { subject: 'Основи інфокомунікацій', teacher: 'Гресь О.В.', date: '27.05', time: '09:00' },
+          { subject: 'Ознайомча практика', teacher: '', date: '22.04', time: '09:00' },
+          { subject: 'Комп\'ютерна дискретна математика', teacher: 'Політанський Р.Л.', date: '29.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Метрологія та ІВТ',
+        code: '122',
+        events: [
+          { subject: 'Іноземна мова (за проф. спрямуванням)', teacher: 'Гіков Л.В.', date: '28.05', time: '09:00' },
+          { subject: 'Фізичне виховання (за видами спорту)', teacher: 'Кожокар М.В.', date: '25.05', time: '09:00' },
+          { subject: 'Ознайомча практика', teacher: '', date: '22.04', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Кібербезпека',
+        code: '125а / 125б',
+        events: [
+          { subject: 'Іноземна мова (за проф. спрямуванням)', teacher: 'Бортник С.Б. / Рубан Д.А.', date: '28.05', time: '09:00' },
+          { subject: 'Фізичне виховання', teacher: 'Кожокар М.В.', date: '25.05', time: '09:00' },
+          { subject: 'Комп\'ютерна дискретна математика', teacher: 'Політанський Р.Л.', date: '29.05', time: '09:00' },
+          { subject: 'Основи інфокомунікацій', teacher: 'Гресь О.В.', date: '27.05', time: '09:00' },
+          { subject: 'Ознайомча практика', teacher: '', date: '22.04', time: '09:00' },
+          { subject: 'Інформатика (курсова робота)', teacher: 'Рябий П.А.', date: '30.05', time: '09:00' },
+          { subject: 'Дискретна математика', teacher: 'Дрінь Я.М.', date: '29.05', time: '09:00' },
+          { subject: 'Основи програмування', teacher: 'Рябий П.А.', date: '27.05', time: '09:00' },
+          { subject: 'Геометрична оптика', teacher: 'Фельде Х.В.', date: '26.05', time: '09:00' },
+          { subject: 'Інженерна та комп\'ютерна графіка', teacher: 'Єрмоленко С.Б.', date: '28.05', time: '09:00' },
+          { subject: 'Інформатика і програмування', teacher: 'Олар О.В.', date: '29.05', time: '09:00' },
+          { subject: 'Навчальна практика', teacher: '', date: '22.04', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Програмування мобільних / ІоТ',
+        code: '142а / 142б',
+        events: [
+          { subject: 'Іноземна мова (за проф. спрямуванням)', teacher: 'Близнюк Г.В. / Кшевецький В.С.', date: '25.05', time: '09:00' },
+          { subject: 'Комп\'ютерна логіка. Комп\'ютерна арифметика', teacher: 'Гімчинська С.Ю.', date: '27.05', time: '09:00' },
+          { subject: 'Обчислювальна практика', teacher: 'Вацек Д.О. / Гордіца В.Е.', date: '23.04', time: '09:00' },
+          { subject: 'Фізичне виховання (за видами спорту)', teacher: 'Кожокар М.В.', date: '25.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Інтелектуальний аналіз даних',
+        code: '144а / 144б',
+        events: [
+          { subject: 'Іноземна мова (за проф. спрямуванням)', teacher: 'Маковійчук Л.В.', date: '27.05', time: '09:00' },
+          { subject: 'Обчислювальна практика', teacher: 'Гордіца В.Е. / Довгунь А.Я.', date: '23.04', time: '09:00' },
+          { subject: 'Фізичне виховання (за видами спорту)', teacher: 'Кожокар М.В.', date: '25.05', time: '09:00' },
+          { subject: 'Комп\'ютерна графіка', teacher: 'Дворжак В.В.', date: '29.05', time: '09:00' },
+          { subject: 'IT Essentials (Cisco)', teacher: 'Гімчинська С.Ю.', date: '29.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Алгоритмічне та програмне забезпечення',
+        code: '141а / 141б',
+        events: [
+          { subject: 'Іноземна мова (за проф. спрямуванням)', teacher: 'Близнюк Г.В.', date: '25.05', time: '09:00' },
+          { subject: 'Обчислювальна практика', teacher: 'Антонюк С.В.', date: '23.04', time: '09:00' },
+          { subject: 'Операційні системи', teacher: 'Коцур М.П.', date: '26.05', time: '09:00' },
+          { subject: 'Комп\'ютерна схемотехніка', teacher: 'Воробець Г.І.', date: '27.05', time: '09:00' },
+          { subject: 'Принципи організації комп\'ютера', teacher: 'Жихаревич В.В.', date: '28.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Програмна інженерія',
+        code: '143а / 143б',
+        events: [
+          { subject: 'Обчислювальна практика', teacher: 'Антонюк С.В.', date: '23.04', time: '09:00' },
+          { subject: 'Процес розробки UX/UI дизайну, Ч2', teacher: 'Комісарчук В.В.', date: '25.05', time: '09:00' },
+          { subject: 'Професійна практика програмної інженерії', teacher: 'Газдюк К.П.', date: '29.05', time: '09:00' },
+          { subject: 'IT Essentials (Cisco)', teacher: 'Гімчинська С.Ю.', date: '29.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Фізика та астрономія',
+        code: '111',
+        events: [
+          { subject: 'Іноземна мова (за проф. спрямуванням)', teacher: 'Кричун А.М.', date: '28.05', time: '15:00' },
+          { subject: 'Фізичне виховання (за видами спорту)', teacher: 'Кожокар М.В.', date: '25.05', time: '15:00' },
+          { subject: 'Теорія ймовірностей і математична статистика', teacher: 'Головацький В.А.', date: '26.05', time: '15:00' },
+        ]
+      },
+      {
+        name: 'Прикладна фізика та наноматеріали',
+        code: '113',
+        events: [
+          { subject: 'Іноземна мова (за проф. спрямуванням)', teacher: 'Близнюк Г.В.', date: '28.05', time: '15:00' },
+          { subject: 'Фізичне виховання (за видами спорту)', teacher: 'Кожокар М.В.', date: '25.05', time: '15:00' },
+          { subject: 'Технологічний практикум', teacher: 'Крамар В.М.', date: '28.05', time: '15:00' },
+        ]
+      },
+      {
+        name: 'Середня освіта (Технології та інформатика)',
+        code: '115',
+        events: [
+          { subject: 'Іноземна мова (за проф. спрямуванням)', teacher: 'Маковійчук Л.В.', date: '26.05', time: '15:00' },
+          { subject: 'Фізичне виховання (за видами спорту)', teacher: 'Кожокар М.В.', date: '25.05', time: '15:00' },
+          { subject: 'Навчальна практика ч. 1, 2', teacher: '', date: '21.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Проф. освіта (Машинобудування)',
+        code: '116',
+        events: [
+          { subject: 'Іноземна мова (за проф. спрямуванням)', teacher: 'Маковійчук Л.В.', date: '26.05', time: '15:00' },
+          { subject: 'Фізичне виховання (за видами спорту)', teacher: 'Кожокар М.В.', date: '25.05', time: '15:00' },
+        ]
+      },
+      {
+        name: 'Інформаційні системи та технології',
+        code: '117',
+        events: [
+          { subject: 'Іноземна мова (за проф. спрямуванням)', teacher: 'Маковійчук Л.В.', date: '27.05', time: '10:00' },
+          { subject: 'Фізичне виховання (за видами спорту)', teacher: 'Кожокар М.В.', date: '28.05', time: '15:00' },
+          { subject: 'Комп\'ютерна графіка', teacher: 'Ткач О.О.', date: '28.05', time: '12:00' },
+          { subject: 'Обчислювальна практика', teacher: '', date: '20.07', time: '12:00' },
+        ]
+      },
+      {
+        name: 'Автоматизація та КІТ',
+        code: '131',
+        events: [
+          { subject: 'Іноземна мова (за проф. спрямуванням)', teacher: 'Близнюк Г.В.', date: '27.05', time: '15:00' },
+          { subject: 'Вища математика. Основи векторного і тензорного аналізу', teacher: 'Войцехівська О.М.', date: '28.05', time: '15:00' },
+          { subject: 'Фізичне виховання (за видами спорту)', teacher: 'Кожокар М.В.', date: '25.05', time: '15:00' },
+          { subject: 'Екологія за проф. спрямуванням', teacher: 'Филипчук Т.В.', date: '26.05', time: '15:00' },
+        ]
+      },
+      {
+        name: 'Мікро- та наносистемна техніка',
+        code: '132',
+        events: [
+          { subject: 'Іноземна мова (за проф. спрямуванням)', teacher: 'Близнюк Г.В.', date: '27.05', time: '15:00' },
+          { subject: 'Вища математика. Основи векторного і тензорного аналізу', teacher: 'Войцехівська О.М.', date: '28.05', time: '15:00' },
+          { subject: 'Імовірнісні основи обробки даних', teacher: 'Юрійчук І.М.', date: '29.05', time: '15:00' },
+          { subject: 'Фізичне виховання (за видами спорту)', teacher: 'Кожокар М.В.', date: '25.05', time: '15:00' },
+        ]
+      },
+      {
+        name: 'Електроенергетика, електротехніка та електромеханіка',
+        code: '133',
+        events: [
+          { subject: 'Іноземна мова (за проф. спрямуванням)', teacher: 'Близнюк Г.В.', date: '27.05', time: '15:00' },
+          { subject: 'Вища математика. Основи векторного і тензорного аналізу', teacher: 'Войцехівська О.М.', date: '28.05', time: '15:00' },
+          { subject: 'Імовірнісні основи обробки даних', teacher: 'Юрійчук І.М.', date: '29.05', time: '15:00' },
+          { subject: 'Фізичне виховання (за видами спорту)', teacher: 'Кожокар М.В.', date: '25.05', time: '15:00' },
+        ]
+      },
+    ]
+  },
+  {
+    id: 'bachelor2',
+    label: '2 курс Бакалавр',
+    sublabel: '4 семестр',
+    groups: [
+      {
+        name: 'Метрологія та ІВТ',
+        code: '222 / 222ск',
+        events: [
+          { subject: 'Електроніка і схемотехніка', teacher: 'Галушко Ю.К.', date: '26.05', time: '09:00' },
+          { subject: 'Курсова робота зі Спеціальних глав вищої математики', teacher: 'Іванський Д.І.', date: '22.05', time: '09:00' },
+          { subject: 'Складання та юстування оптичних приладів', teacher: 'Городинська Н.В.', date: '25.05', time: '09:00' },
+          { subject: 'Схемотехніка (курсова робота)', teacher: 'Браїловський В.В.', date: '26.05', time: '09:00' },
+          { subject: 'Електроживлення', teacher: 'Браїловський В.В.', date: '25.05', time: '09:00' },
+          { subject: 'Тайм-менеджмент', teacher: 'Ілащук М.М.', date: '27.05', time: '09:00' },
+          { subject: 'Структуровані кабельні системи', teacher: 'Коновчук О.В.', date: '28.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Телекомунікації',
+        code: '224 / 224ск',
+        events: [
+          { subject: 'Python and Data Science', teacher: 'Нестеренко В.В.', date: '27.05', time: '09:00' },
+          { subject: 'Цифрова обробка сигналів', teacher: 'Гавриляк М.С.', date: '28.05', time: '09:00' },
+          { subject: 'Схемотехніка (курсова робота)', teacher: 'Браїловський В.В.', date: '22.05', time: '09:00' },
+          { subject: 'Електроживлення', teacher: 'Браїловський В.В.', date: '25.05', time: '09:00' },
+          { subject: 'Розробка додатків на платформі .NET', teacher: 'Томка Ю.Я.', date: '29.05', time: '09:00' },
+          { subject: 'Технічна електродинаміка', teacher: 'Політанський Р.Л.', date: '26.05', time: '09:00' },
+          { subject: 'Теорія електрозв\'язку', teacher: 'Склярчук В.М.', date: '29.05', time: '09:00' },
+          { subject: 'Обчислювальна техніка та мікропроцесори', teacher: 'Верига А.Д.', date: '27.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Безпека ІКС та ІоТ',
+        code: '221 / 221ск',
+        events: [
+          { subject: 'Електроживлення', teacher: 'Браїловський В.В.', date: '25.05', time: '09:00' },
+          { subject: 'Основи кібербезпеки пристроїв і систем ІоТ', teacher: 'Гресь О.В.', date: '28.05', time: '09:00' },
+          { subject: 'Обчислювальна техніка та мікропроцесори', teacher: 'Верига А.Д.', date: '27.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Видавництво та поліграфія',
+        code: '226 / 226ск',
+        events: [
+          { subject: 'Механізми поліграфічного обладнання', teacher: 'Житарюк В.Г.', date: '25.05', time: '09:00' },
+          { subject: 'Опрацювання текстової інформації', teacher: 'Фельде Х.В.', date: '26.05', time: '09:00' },
+          { subject: 'Видавничо-поліграфічні технології', teacher: 'Коновчук О.В.', date: '29.05', time: '09:00' },
+          { subject: 'Технології та обладнання спеціальних видів друку', teacher: 'Добрянський А.І.', date: '28.05', time: '09:00' },
+          { subject: '3D моделювання та друк', teacher: '', date: '26.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Кібербезпека',
+        code: '225 / 225ск',
+        events: [
+          { subject: 'Програмне забезпечення об\'єктів кіберпростору (курсова робота)', teacher: 'Галюк С.Д.', date: '25.05', time: '09:00' },
+          { subject: 'Методи OSINT у кібербезпеці', teacher: 'Ластівка Г.І.', date: '27.05', time: '09:00' },
+          { subject: 'Основи кібербезпеки пристроїв і систем ІоТ', teacher: 'Гресь О.В.', date: '28.05', time: '09:00' },
+          { subject: 'Детектив у сучасній світовій літературі', teacher: 'Сажина А.В.', date: '27.05', time: '09:00' },
+          { subject: 'Міжособистісне спілкування та побудова команд', teacher: 'Чаплак Я.В.', date: '29.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Інтелектуальний аналіз даних',
+        code: '244а / 244б',
+        events: [
+          { subject: 'Професійна іноземна мова', teacher: 'Маковійчук Л.В.', date: '28.05', time: '09:00' },
+          { subject: 'Спеціалізовані системи керування базами даних', teacher: 'Ковальчук М.Л.', date: '26.05', time: '09:00' },
+          { subject: 'JavaScript-технології', teacher: 'Олар О.В.', date: '27.05', time: '09:00' },
+          { subject: 'Виробнича практика', teacher: 'Дубовик О.Ю.', date: '23.04', time: '09:00' },
+          { subject: 'Безпека в цифровому просторі', teacher: 'Остапов С.Е.', date: '27.05', time: '09:00' },
+          { subject: 'Англійська мова проф. спрямування', teacher: 'Маковійчук Л.В.', date: '28.05', time: '09:00' },
+          { subject: 'Комп\'ютерна графіка', teacher: 'Воропаєва С.Л.', date: '29.05', time: '09:00' },
+          { subject: 'Python для Data Science', teacher: 'Нестеренко В.В.', date: '27.05', time: '09:00' },
+          { subject: 'Спеціальні задачі дослідження операцій', teacher: 'Руснак М.А.', date: '26.05', time: '09:00' },
+          { subject: 'Паттерни проєктування', teacher: 'Ватаманіца Е.В.', date: '27.05', time: '09:00' },
+          { subject: 'Безпека кіберпростору', teacher: 'Рождественська М.Г.', date: '27.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Алгоритмічне та програмне забезпечення',
+        code: '241а / 241б / 241ск',
+        events: [
+          { subject: 'Обчислювальна практика', teacher: 'Лазорик В.В.', date: '20.02', time: '09:00' },
+          { subject: 'Безпека в цифровому просторі', teacher: 'Остапов С.Е.', date: '27.05', time: '09:00' },
+          { subject: 'Фінансування та організація власного бізнесу', teacher: 'Ткач Є.В.', date: '27.05', time: '09:00' },
+          { subject: 'Програмування мовою Java', teacher: 'Двірничук К.В.', date: '28.05', time: '09:00' },
+          { subject: 'Програмні пакети 3D моделювання і друку', teacher: 'Воропаєва С.Л.', date: '25.05', time: '09:00' },
+          { subject: 'Власний бізнес: реєстрація, облік і оподаткування', teacher: 'Кузь В.І.', date: '27.05', time: '09:00' },
+          { subject: 'Паттерни проєктування', teacher: 'Ватаманіца Е.В.', date: '27.05', time: '09:00' },
+          { subject: 'Системне програмування в ОС Windows', teacher: 'Жихаревич В.В.', date: '25.05', time: '09:00' },
+          { subject: 'Програмне забезпечення мережевих технологій', teacher: 'Д\'яченко Л.І.', date: '26.05', time: '09:00' },
+          { subject: 'Алгоритмічні основи комп\'ютерної графіки', teacher: 'Фратавчан В.Г.', date: '29.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Програмування мобільних / ІоТ',
+        code: '242б / 242а',
+        events: [
+          { subject: 'Виробнича практика', teacher: 'Пшеничний О.О. / Амарій А.М.', date: '23.04', time: '09:00' },
+          { subject: 'Безпека в цифровому просторі', teacher: 'Остапов С.Е.', date: '27.05', time: '09:00' },
+          { subject: 'Бази даних та NoSQL-системи', teacher: 'Дячук Р.Л.', date: '29.05', time: '09:00' },
+          { subject: 'Фінансування та організація власного бізнесу', teacher: 'Ткач Є.В.', date: '27.05', time: '09:00' },
+          { subject: 'Паттерни проєктування', teacher: 'Ватаманіца Е.В.', date: '27.05', time: '09:00' },
+          { subject: 'Процес розробки UX та продуктовий дизайн', teacher: 'Комісарчук В.В. / Томюк Г.М.', date: '28.05', time: '09:00' },
+          { subject: 'Технології Business Intelligence', teacher: 'Газдюк К.П.', date: '28.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Комп\'ютерна інженерія',
+        code: '242а',
+        events: [
+          { subject: 'Виробнича практика', teacher: 'Бранашко В.О.', date: '23.04', time: '09:00' },
+          { subject: 'Безпека в цифровому просторі', teacher: 'Янушевський С.В.', date: '27.05', time: '09:00' },
+          { subject: 'Принципи організації комп\'ютера', teacher: 'Жихаревич В.В.', date: '28.05', time: '09:00' },
+          { subject: 'Процес розробки UX/UI дизайну, Ч2', teacher: 'Комісарчук В.В.', date: '28.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Програмна інженерія',
+        code: '243а / 243б / 243ск',
+        events: [
+          { subject: 'Виробнича практика', teacher: 'Амарій А.М. / Пшеничний О.О.', date: '23.04', time: '09:00' },
+          { subject: 'Безпека в цифровому просторі', teacher: 'Остапов С.Е.', date: '27.05', time: '09:00' },
+          { subject: 'Фінансування та організація власного бізнесу', teacher: 'Ткач Є.В.', date: '27.05', time: '09:00' },
+          { subject: 'Власний бізнес: реєстрація, облік і оподаткування', teacher: 'Кузь В.І.', date: '27.05', time: '09:00' },
+          { subject: 'Гендер та сексуальність', teacher: 'Медіна Т.В.', date: '27.05', time: '09:00' },
+          { subject: 'Паттерни проєктування', teacher: 'Ватаманіца Е.В.', date: '27.05', time: '09:00' },
+          { subject: 'Безпека кіберпростору', teacher: 'Рождественська М.Г.', date: '27.05', time: '09:00' },
+          { subject: 'Розробка додатків на платформі .NET', teacher: 'Томка Ю.Я.', date: '29.05', time: '09:00' },
+          { subject: 'Польська мова для проф. спілкування', teacher: 'Слюсар О.Ф.', date: '27.05', time: '09:00' },
+          { subject: 'Процес розробки UX та продуктовий дизайн', teacher: 'Комісарчук В.В. / Томюк Г.М.', date: '28.05', time: '09:00' },
+          { subject: 'Технології Business Intelligence', teacher: 'Газдюк К.П.', date: '28.05', time: '09:00' },
+          { subject: 'Системне програмування в ОС Windows', teacher: 'Жихаревич В.В.', date: '25.05', time: '09:00' },
+          { subject: 'Психологія кар\'єри', teacher: 'Поліщук О.М.', date: '27.05', time: '09:00' },
+          { subject: 'Програмне забезпечення мережевих технологій', teacher: 'Д\'яченко Л.І.', date: '26.05', time: '09:00' },
+          { subject: 'Алгоритмічні основи комп\'ютерної графіки', teacher: 'Фратавчан В.Г.', date: '29.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Фізика та астрономія / Прикладна фізика',
+        code: '211 / 213 / 213ск',
+        events: [
+          { subject: 'Історія фізики', teacher: 'Войцехівська О.М.', date: '26.05', time: '15:00' },
+          { subject: 'Прикладна електроніка та нанотехнології', teacher: 'Константинович І.А.', date: '25.05', time: '15:00' },
+          { subject: 'Патентознавство та захист інтелектуальної власності', teacher: 'Микитюк П.Д.', date: '26.05', time: '15:00' },
+          { subject: 'Чисельні методи', teacher: 'Маник О.М.', date: '28.05', time: '15:00' },
+          { subject: 'Фізика твердого тіла для інженерів', teacher: 'Крамар В.М.', date: '26.05', time: '15:00' },
+          { subject: 'Елементи теорії пружності', teacher: 'Шайко-Шайковський О.Г.', date: '25.05', time: '15:00' },
+        ]
+      },
+      {
+        name: 'Автоматизація та КІТ',
+        code: '231ск / 231',
+        events: [
+          { subject: 'Курсова робота по предмету "Теорія електричних та електронних кіл"', teacher: 'Андрущак Г.О.', date: '29.05', time: '15:00' },
+          { subject: 'Нетрадиційні та відновлювані джерела живлення на транспорті', teacher: 'Козярський Д.П.', date: '26.05', time: '15:00' },
+          { subject: 'Фізичне виховання засобами спорту', teacher: 'Кожокар М.В.', date: '27.05', time: '15:00' },
+          { subject: 'Основи твердотільної електроніки', teacher: 'Козярський І.П.', date: '28.05', time: '15:00' },
+          { subject: 'Новітня техніка і технології', teacher: 'Козярський І.П.', date: '27.05', time: '15:00' },
+        ]
+      },
+      {
+        name: 'Електроенергетика, електротехніка та електромеханіка',
+        code: '233',
+        events: [
+          { subject: 'Вища математика. Основи векторного і тензорного аналізу', teacher: 'Войцехівська О.М.', date: '28.05', time: '15:00' },
+          { subject: 'Курсова робота по предмету "Теорія електричних кіл"', teacher: 'Андрущак Г.О.', date: '25.05', time: '15:00' },
+          { subject: 'Новітня техніка і технології', teacher: 'Козярський І.П.', date: '27.05', time: '15:00' },
+          { subject: 'Основи твердотільної електроніки', teacher: 'Козярський І.П.', date: '28.05', time: '13:00' },
+          { subject: 'Фізика твердого тіла', teacher: 'Сльотов О.М.', date: '29.05', time: '15:00' },
+          { subject: 'Безпека кіберпростору', teacher: 'Рождественська М.Г.', date: '27.05', time: '15:00' },
+          { subject: 'Курсова робота по предмету "Електричні машини"', teacher: 'Майструк Е.В.', date: '29.05', time: '15:00' },
+          { subject: 'Енергетична електроніка', teacher: 'Козярський Д.П.', date: '25.05', time: '13:00' },
+          { subject: 'Психологія кар\'єри', teacher: 'Поліщук О.М.', date: '27.05', time: '15:00' },
+        ]
+      },
+      {
+        name: 'Мікро- та наносистемна техніка',
+        code: '232',
+        events: [
+          { subject: 'Лазерні прилади і системи', teacher: 'Стребежев В.М.', date: '25.05', time: '15:00' },
+          { subject: 'Екологія за проф. спрямуванням', teacher: 'Филипчук Т.В.', date: '28.05', time: '15:00' },
+        ]
+      },
+    ]
+  },
+  {
+    id: 'bachelor3',
+    label: '3 курс Бакалавр',
+    sublabel: '6 семестр',
+    groups: [
+      {
+        name: 'Метрологія та ІВТ',
+        code: '322',
+        events: [
+          { subject: 'Виробнича практика', teacher: '', date: '22.04', time: '09:00' },
+          { subject: 'Інтерфейси засобів вимірювання та мережеві технології ІВС', teacher: 'Коновчук О.В.', date: '26.05', time: '09:00' },
+          { subject: 'Техніка спектроскопії', teacher: 'Солтис І.В.', date: '29.05', time: '09:00' },
+          { subject: 'Лазерні прилади та системи', teacher: 'Вікторовська Ю.Ю.', date: '28.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Телекомунікації',
+        code: '324 / 324ск',
+        events: [
+          { subject: 'Виробнича практика', teacher: '', date: '22.04', time: '09:00' },
+          { subject: 'Теорія інформації', teacher: 'Курек Є.І.', date: '25.05', time: '09:00' },
+          { subject: 'Комунікаційні та комп\'ютерні мережі', teacher: 'Коновчук О.В.', date: '27.05', time: '09:00' },
+          { subject: 'Телекомунікаційні системи передачі', teacher: 'Склярчук В.М.', date: '27.05', time: '09:00' },
+          { subject: 'Мережеві операційні системи', teacher: 'Бурковець Д.М.', date: '25.05', time: '09:00' },
+          { subject: 'Пристрої приймання і обробки сигналів (курсова робота)', teacher: 'Браїловський В.В.', date: '29.05', time: '09:00' },
+          { subject: 'Антенно-фідерні пристрої', teacher: 'Лесінський В.В.', date: '28.05', time: '09:00' },
+          { subject: 'Системи запису інформації', teacher: 'Саміла А.П.', date: '26.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Видавництво та поліграфія',
+        code: '326 / 326ск',
+        events: [
+          { subject: 'Технологічна практика', teacher: '', date: '22.04', time: '09:00' },
+          { subject: 'Web-дизайн', teacher: 'Рябий П.А.', date: '26.05', time: '09:00' },
+          { subject: 'Модельно-орієнтоване проектування', teacher: 'Круліковський О.В.', date: '25.05', time: '09:00' },
+          { subject: 'Системи запису інформації', teacher: 'Саміла А.П.', date: '26.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Безпека ІКС та ІоТ',
+        code: '321 / 321ск',
+        events: [
+          { subject: 'Захист інформації електронних ресурсів', teacher: 'Чалий Ю.П.', date: '29.05', time: '09:00' },
+          { subject: 'Комунікаційні та комп\'ютерні мережі', teacher: 'Коновчук О.В.', date: '27.05', time: '09:00' },
+          { subject: 'Web-дизайн', teacher: 'Рябий П.А.', date: '26.05', time: '09:00' },
+          { subject: 'Мережеві операційні системи', teacher: 'Бурковець Д.М.', date: '25.05', time: '09:00' },
+          { subject: 'Конструкторсько-технологічна практика', teacher: '', date: '22.04', time: '09:00' },
+          { subject: 'Системи запису інформації', teacher: 'Саміла А.П.', date: '26.05', time: '09:00' },
+          { subject: 'Основи штучного інтелекту', teacher: 'Галюк С.Д.', date: '27.05', time: '09:00' },
+          { subject: 'Взаємодія між компонентами систем ІоТ', teacher: 'Саміла А.П.', date: '29.05', time: '09:00' },
+          { subject: 'Криптографія', teacher: 'Шпатар П.М.', date: '28.05', time: '09:00' },
+          { subject: 'Криптографія (курсова робота)', teacher: 'Гресь О.В. / Шпатар П.М.', date: '27.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Кібербезпека',
+        code: '325 / 325ск',
+        events: [
+          { subject: 'Захист інформації електронних ресурсів', teacher: 'Чалий Ю.П.', date: '29.05', time: '09:00' },
+          { subject: 'Мережеві операційні системи', teacher: 'Бурковець Д.М.', date: '25.05', time: '09:00' },
+          { subject: 'Теорія інформації', teacher: 'Курек Є.І.', date: '25.05', time: '09:00' },
+          { subject: 'Конструкторсько-технологічна практика', teacher: '', date: '22.04', time: '09:00' },
+          { subject: 'Основи штучного інтелекту', teacher: 'Галюк С.Д.', date: '27.05', time: '09:00' },
+          { subject: 'Взаємодія між компонентами систем ІоТ', teacher: 'Саміла А.П.', date: '29.05', time: '09:00' },
+          { subject: 'Криптографія', teacher: 'Шпатар П.М.', date: '28.05', time: '09:00' },
+          { subject: 'Криптографія (курсова робота)', teacher: 'Гресь О.В. / Шпатар П.М.', date: '27.05', time: '09:00' },
+          { subject: 'Виробничо-технологічна практика', teacher: '', date: '22.04', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Алгоритмічне та програмне забезпечення',
+        code: '341а / 341б / 341ск',
+        events: [
+          { subject: 'Проєктно-технологічна практика', teacher: 'Тимофієва Є.М. / Угрин Д.І. / Бранашко В.О.', date: '20.02', time: '09:00' },
+          { subject: 'Стратегічний бізнес-аналіз та планування в ІТ', teacher: 'Дворжак В.В.', date: '26.05', time: '09:00' },
+          { subject: 'Сучасні технології розробки Web-додатків', teacher: 'Олар О.В.', date: '29.05', time: '09:00' },
+          { subject: 'Курсова робота (комп\'ютерні мережі)', teacher: 'Олар О.Я.', date: '29.05', time: '09:00' },
+          { subject: 'Тестування програмного забезпечення', teacher: 'Одайська Х.С.', date: '25.05', time: '09:00' },
+          { subject: 'Мікроконтролери', teacher: 'Воробець О.І.', date: '25.05', time: '09:00' },
+          { subject: 'Протоколи та сервіси Інтернет', teacher: 'Антонюк С.В.', date: '27.05', time: '09:00' },
+          { subject: 'Теорія інформації та кодування', teacher: 'Воробець Г.І.', date: '25.05', time: '09:00' },
+          { subject: 'Хмарні технології та сервіси', teacher: 'Дяконенко Б.В.', date: '26.05', time: '09:00' },
+          { subject: 'Програмування мобільних додатків', teacher: 'Коцур М.П.', date: '26.05', time: '09:00' },
+          { subject: 'Системне програмування в ОС Windows', teacher: 'Жихаревич В.В.', date: '25.05', time: '09:00' },
+          { subject: 'Програмне забезпечення мережевих технологій', teacher: 'Д\'яченко Л.І.', date: '26.05', time: '09:00' },
+          { subject: 'Проєктування та реалізація мікросервісної архітектури', teacher: 'Нікітін Ю.А.', date: '25.05', time: '09:00' },
+          { subject: 'Технології Business Intelligence', teacher: 'Газдюк К.П.', date: '28.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Інтелектуальний аналіз даних',
+        code: '344а / 344б / 344ск',
+        events: [
+          { subject: 'Проєктно-технологічна практика', teacher: 'Дубовик О.Ю.', date: '23.04', time: '09:00' },
+          { subject: 'Стратегічний бізнес-аналіз та планування в ІТ', teacher: 'Дворжак В.В.', date: '26.05', time: '09:00' },
+          { subject: 'Сучасні технології розробки Web-додатків', teacher: 'Олар О.В.', date: '29.05', time: '09:00' },
+          { subject: 'Курсова робота (комп\'ютерні мережі)', teacher: 'Олар О.Я.', date: '29.05', time: '09:00' },
+          { subject: 'Середовище розробки застосунків Android/Kotlin', teacher: 'Дубовик О.Ю.', date: '28.05', time: '09:00' },
+          { subject: 'Тестування програмного забезпечення', teacher: 'Прохоров Г.В.', date: '26.05', time: '09:00' },
+          { subject: 'Мікроконтролери', teacher: 'Воробець О.І.', date: '25.05', time: '09:00' },
+          { subject: 'Протоколи та сервіси Інтернет', teacher: 'Антонюк С.В.', date: '27.05', time: '09:00' },
+          { subject: 'Хмарні технології та сервіси', teacher: 'Дяконенко Б.В.', date: '26.05', time: '09:00' },
+          { subject: 'Програмування мобільних додатків', teacher: 'Коцур М.П.', date: '26.05', time: '09:00' },
+          { subject: 'SMM та основи Digital-комунікації', teacher: 'Шумиляк Л.М.', date: '25.05', time: '09:00' },
+          { subject: 'SEO оптимізація та просування', teacher: 'Карачевцев А.О.', date: '29.05', time: '09:00' },
+          { subject: 'Аналітика продуктового ІТ', teacher: 'Комісарчук В.В.', date: '27.05', time: '09:00' },
+          { subject: 'Процес розробки UX та продуктовий дизайн', teacher: 'Комісарчук В.В. / Томюк Г.М.', date: '29.05', time: '09:00' },
+          { subject: 'Motion дизайн та цифрова ілюстрація', teacher: 'Танащишена І.Є.', date: '26.05', time: '09:00' },
+          { subject: 'SMM: просування в соціальних мережах', teacher: 'Шумиляк Л.М.', date: '25.05', time: '09:00' },
+          { subject: 'Технології Business Intelligence', teacher: 'Газдюк К.П.', date: '28.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Комп\'ютерна інженерія',
+        code: '342а / 342б / 342ск',
+        events: [
+          { subject: 'Проєктно-технологічна практика', teacher: 'Пшеничний О.О. / Нікітін Ю.А.', date: '23.04', time: '09:00' },
+          { subject: 'Стратегічний бізнес-аналіз та планування в ІТ', teacher: 'Дворжак В.В.', date: '26.05', time: '09:00' },
+          { subject: 'Сучасні технології розробки веб-додатків', teacher: 'Олар О.В.', date: '28.05', time: '09:00' },
+          { subject: 'Курсова робота (комп\'ютерні мережі)', teacher: 'Олар О.Я.', date: '29.05', time: '09:00' },
+          { subject: 'Польська мова для проф. спілкування', teacher: 'Слюсар О.Ф.', date: '26.05', time: '09:00' },
+          { subject: 'Середовище розробки застосунків Android/Kotlin', teacher: 'Дубовик О.Ю.', date: '28.05', time: '09:00' },
+          { subject: 'Тестування програмного забезпечення', teacher: 'Одайська Х.С.', date: '25.05', time: '09:00' },
+          { subject: 'Мікроконтролери', teacher: 'Воробець О.І.', date: '25.05', time: '09:00' },
+          { subject: 'Протоколи та сервіси Інтернет', teacher: 'Антонюк С.В.', date: '27.05', time: '09:00' },
+          { subject: 'Хмарні технології та сервіси', teacher: 'Дяконенко Б.В.', date: '26.05', time: '09:00' },
+          { subject: 'English for IT', teacher: 'Тоненчук Т.В. / Цинтар Н.В.', date: '28.05', time: '09:00' },
+          { subject: 'Soft Skills: соціально-психологічні аспекти', teacher: 'Поліщук О.М.', date: '28.05', time: '09:00' },
+          { subject: 'Власний бізнес: реєстрація, облік і оподаткування', teacher: 'Кузь В.І.', date: '27.05', time: '09:00' },
+          { subject: 'Фізичне виховання засобами спорту', teacher: 'Кожокар М.В.', date: '27.05', time: '09:00' },
+          { subject: 'Системне програмування в ОС Windows', teacher: 'Жихаревич В.В.', date: '25.05', time: '09:00' },
+          { subject: 'Програмне забезпечення мережевих технологій', teacher: 'Д\'яченко Л.І.', date: '26.05', time: '09:00' },
+          { subject: 'Аналітика продуктового ІТ', teacher: 'Комісарчук В.В.', date: '27.05', time: '09:00' },
+          { subject: 'Проєктування та реалізація мікросервісної архітектури', teacher: 'Нікітін Ю.А.', date: '25.05', time: '09:00' },
+          { subject: 'Технології Business Intelligence', teacher: 'Газдюк К.П.', date: '28.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Програмна інженерія',
+        code: '343а / 343б / 343с',
+        events: [
+          { subject: 'Проєктно-технологічна практика', teacher: 'Амарій А.М.', date: '16.06', time: '09:00' },
+          { subject: 'Стратегічний бізнес-аналіз та планування в ІТ', teacher: 'Дворжак В.В.', date: '26.05', time: '09:00' },
+          { subject: 'Сучасні технології розробки Web-додатків', teacher: 'Олар О.В.', date: '29.05', time: '09:00' },
+          { subject: 'Курсова робота (комп\'ютерні мережі)', teacher: 'Олар О.Я.', date: '29.05', time: '09:00' },
+          { subject: 'Професійна іноземна мова', teacher: 'Кшевецький В.С. / Маковійчук Л.В.', date: '27.05', time: '09:00' },
+          { subject: 'Середовище розробки застосунків Android/Kotlin', teacher: 'Дубовик О.Ю.', date: '28.05', time: '09:00' },
+          { subject: 'Тестування програмного забезпечення', teacher: 'Прохоров Г.В.', date: '26.05', time: '09:00' },
+          { subject: 'Протоколи та сервіси Інтернет', teacher: 'Антонюк С.В.', date: '27.05', time: '09:00' },
+          { subject: 'English for IT', teacher: 'Тоненчук Т.В. / Цинтар Н.В.', date: '28.05', time: '09:00' },
+          { subject: 'Soft Skills: соціально-психологічні аспекти', teacher: 'Поліщук О.М.', date: '28.05', time: '09:00' },
+          { subject: 'Фінансування та організація власного бізнесу', teacher: 'Ткач Є.В.', date: '27.05', time: '09:00' },
+          { subject: 'Аналітика продуктового ІТ', teacher: 'Комісарчук В.В.', date: '27.05', time: '09:00' },
+          { subject: 'Процес розробки UX та продуктовий дизайн', teacher: 'Комісарчук В.В. / Томюк Г.М.', date: '29.05', time: '09:00' },
+          { subject: 'Польська мова для проф. спілкування (А1-А2)', teacher: 'Слюсар О.Ф.', date: '27.05', time: '09:00' },
+          { subject: 'Англійська мова B1 (інтенсив)', teacher: 'Франчук Б.Р.', date: '27.05', time: '09:00' },
+          { subject: 'SMM та основи Digital-комунікації', teacher: 'Шумиляк Л.М.', date: '25.05', time: '09:00' },
+          { subject: 'SMM: просування в соціальних мережах', teacher: 'Шумиляк Л.М.', date: '25.05', time: '09:00' },
+          { subject: 'Motion дизайн та цифрова ілюстрація', teacher: 'Танащишена І.Є.', date: '26.05', time: '09:00' },
+          { subject: 'Технології Business Intelligence', teacher: 'Газдюк К.П.', date: '28.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Фізика та астрономія / Прикладна фізика',
+        code: '311 / 313',
+        events: [
+          { subject: 'Фізика ядра й елементарних частинок', teacher: 'Юрійчук І.М.', date: '28.05', time: '15:00' },
+          { subject: 'Дефекти у кристалах', teacher: 'Кузьмін А.Р.', date: '27.05', time: '15:00' },
+          { subject: 'Мови програмування', teacher: 'Ткач О.О.', date: '26.05', time: '15:00' },
+          { subject: 'Електронна мікроскопія', teacher: 'Солодкий М.С.', date: '25.05', time: '15:00' },
+          { subject: 'Прикладна електрофізика', teacher: 'Черкез Р.Г.', date: '27.05', time: '15:00' },
+          { subject: 'Техніка фізичного експерименту', teacher: 'Гаврилюк М.В.', date: '29.05', time: '15:00' },
+          { subject: 'Фізичні лікувальні методи та обладнання', teacher: 'Кобилянський Р.Р.', date: '25.05', time: '15:00' },
+          { subject: 'Чисельні методи', teacher: 'Маник О.М.', date: '26.05', time: '15:00' },
+          { subject: 'Програмування та комп\'ютерне моделювання', teacher: 'Прибила А.В.', date: '29.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Технології та інформатика / Трудове навчання',
+        code: '315 / 315ск / 316 / 316ск',
+        events: [
+          { subject: 'Здоров\'язбережувальні технології та домедична допомога', teacher: 'Білоус В.В.', date: '25.05', time: '13:00' },
+          { subject: 'Курсова робота "Методика викладання предмету «Трудове навчання»"', teacher: 'Томаш В.В.', date: '27.05', time: '15:00' },
+          { subject: 'Економіка, підприємництво і організація виробництва', teacher: 'Ксьондз С.В.', date: '29.05', time: '15:00' },
+          { subject: 'Навчальна педагогічна практика', teacher: 'Деревянчук О.В.', date: '25.05', time: '14:30' },
+          { subject: 'Технологія машинобудування (у 2 ч.)', teacher: 'Деревянчук О.В.', date: '28.05', time: '15:00' },
+          { subject: 'Навчальна практика ч. 2', teacher: 'Крамар В.М.', date: '29.05', time: '16:00' },
+          { subject: 'Методика соціально-виховної роботи в ПТНЗ', teacher: 'Томаш В.В.', date: '26.05', time: '15:00' },
+          { subject: 'Технологічний практикум', teacher: 'Крамар В.М.', date: '26.05', time: '15:00' },
+        ]
+      },
+      {
+        name: 'Мікро- та наносистемна техніка',
+        code: '332',
+        events: [
+          { subject: 'Лазерні прилади і системи', teacher: 'Стребежев В.М.', date: '25.05', time: '15:00' },
+          { subject: 'Курсова робота по предмету "Аналогова схемотехніка"', teacher: 'Нічий С.В.', date: '26.05', time: '15:00' },
+          { subject: 'Протоколи передачі даних', teacher: 'Нічий С.В.', date: '29.05', time: '15:00' },
+          { subject: 'Виробнича практика', teacher: '', date: '23.04', time: '09:00' },
+          { subject: 'Сенсорна електроніка', teacher: 'Стребежев В.М.', date: '28.05', time: '15:00' },
+        ]
+      },
+      {
+        name: 'Автоматизація та КІТ',
+        code: '331 / 331ск',
+        events: [
+          { subject: 'Екологія за проф. спрямуванням', teacher: 'Филипчук Т.В.', date: '25.05', time: '15:00' },
+          { subject: 'Курсова робота по предмету "Аналогова схемотехніка"', teacher: 'Нічий С.В.', date: '26.05', time: '15:00' },
+          { subject: 'Протоколи передачі даних', teacher: 'Нічий С.В.', date: '29.05', time: '15:00' },
+          { subject: 'Виробнича практика', teacher: '', date: '23.04', time: '09:00' },
+          { subject: 'Новітня техніка і технології', teacher: 'Козярський І.П.', date: '27.05', time: '15:00' },
+          { subject: 'Технологічні основи електроніки', teacher: 'Мостовий А.І.', date: '27.05', time: '15:00' },
+          { subject: 'Курсова робота по предмету "Електричні системи та мережі"', teacher: 'Козярський Д.П.', date: '26.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Електроенергетика, електротехніка та електромеханіка',
+        code: '333 / 333ск',
+        events: [
+          { subject: 'Виробнича практика', teacher: '', date: '23.04', time: '09:00' },
+          { subject: 'Новітня техніка і технології', teacher: 'Козярський І.П.', date: '27.05', time: '15:00' },
+          { subject: 'Курсова робота по предмету "Аналогова схемотехніка"', teacher: 'Нічий С.В.', date: '26.05', time: '15:00' },
+          { subject: 'Курсова робота по предмету "Електричні системи та мережі"', teacher: 'Козярський Д.П.', date: '26.05', time: '15:00' },
+        ]
+      },
+    ]
+  },
+  {
+    id: 'master1',
+    label: '1 курс Магістр',
+    sublabel: '2 семестр',
+    groups: [
+      {
+        name: 'Фотоніка: комп\'ютерні оптичні системи',
+        code: '122м',
+        events: [
+          { subject: 'Організація наукових досліджень з основами інтелектуальної власності', teacher: 'Мотрич А.В.', date: '27.05', time: '09:00' },
+          { subject: 'Оптоелектронні інформаційні системи', teacher: 'Мохунь І.І.', date: '28.05', time: '09:00' },
+          { subject: 'Кореляційна оптика (І)', teacher: 'Мохунь І.І.', date: '26.05', time: '09:00' },
+          { subject: 'Композиційний дизайн', teacher: 'Фельде Х.В.', date: '29.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Інформаційні мережі зв\'язку',
+        code: '124м',
+        events: [
+          { subject: 'Іноземна мова для міжнародної комунікації (англійська)', teacher: 'Цинтар Н.В.', date: '29.05', time: '09:00' },
+          { subject: 'Методика викладання фахових дисциплін', teacher: 'Вікторовська Ю.Ю.', date: '27.05', time: '09:00' },
+          { subject: 'Інтернет-технології', teacher: 'Бурковець Д.М.', date: '25.05', time: '09:00' },
+          { subject: 'Перспективні телекомунікаційні технології', teacher: 'Щукін С.П.', date: '26.05', time: '09:00' },
+          { subject: 'Розроблення і керування проектами та стартапами', teacher: 'Кривецький В.І.', date: '28.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Радіотехніка',
+        code: '121м',
+        events: [
+          { subject: 'ТЗІ в комп\'ютерних системах', teacher: 'Лесінський В.В.', date: '26.05', time: '09:00' },
+          { subject: 'ТЗІ в інформаційно-вимірювальних системах', teacher: 'Шпатар П.М.', date: '28.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Кібербезпека',
+        code: '125м',
+        events: [
+          { subject: 'Розроблення і впровадження засобів і технологій у сфері інформаційної безпеки', teacher: 'Рождественська М.Г.', date: '25.05', time: '09:00' },
+          { subject: 'Засоби проектування захищених інфокомунікаційних мереж', teacher: 'Ластівка Г.І.', date: '26.05', time: '09:00' },
+          { subject: 'Захист персональних даних та соціальна інженерія', teacher: 'Рождественська М.Г.', date: '29.05', time: '09:00' },
+          { subject: 'Технології та кібербезпека засобів штучного інтелекту', teacher: 'Галюк С.Д.', date: '28.05', time: '09:00' },
+          { subject: 'Безпека кіберпростору', teacher: 'Рождественська М.Г.', date: '27.05', time: '09:00' },
+          { subject: 'ТЗІ в телекомунікаційних системах', teacher: 'Косован Г.В.', date: '27.05', time: '09:00' },
+          { subject: 'Системи типу "Розумний будинок"', teacher: 'Верига А.Д.', date: '25.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Технологія електронних мультимедійних видань',
+        code: '126м',
+        events: [
+          { subject: 'Основи відчуття та сприйняття мультимедійної інформації', teacher: 'Городинська Н.В.', date: '26.05', time: '09:00' },
+          { subject: 'Композиційний дизайн електронних мультимедійних видань', teacher: 'Фельде Х.В.', date: '22.05', time: '09:00' },
+          { subject: 'Сучасні засоби обробки та редагування цифрових зображень', teacher: 'Мотрич А.В.', date: '25.05', time: '09:00' },
+          { subject: 'Internet-технології', teacher: 'Бурковець Д.М.', date: '29.05', time: '09:00' },
+          { subject: 'Логіка та критичне мислення', teacher: 'Рошкулець Р.Г.', date: '28.05', time: '09:00' },
+          { subject: 'Робототехніка', teacher: '', date: '27.05', time: '09:00' },
+          { subject: '3D моделювання та друк', teacher: '', date: '29.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Комп\'ютерна інженерія ІоТ та кіберфізичних систем',
+        code: '142а м / 142б м',
+        events: [
+          { subject: 'Науково-дослідна робота за темою магістерського проєкту', teacher: 'Дейбук В.Г.', date: '27.05', time: '09:00' },
+          { subject: 'Технологія ІоТ Blokchain', teacher: 'Іванущак Н.М.', date: '27.05', time: '09:00' },
+          { subject: 'Методи цифрової обробки зображень', teacher: 'Баловсяк С.В.', date: '29.05', time: '09:00' },
+          { subject: 'Охорона праці в ІТ галузі', teacher: 'Ілащук М.М.', date: '26.05', time: '09:00' },
+          { subject: 'Програмування Android пристроїв', teacher: 'Кирилюк Т.П.', date: '25.05', time: '09:00' },
+          { subject: 'Програмування комп\'ютерних мереж', teacher: 'Лазорик В.В.', date: '28.05', time: '09:00' },
+          { subject: 'Системне адміністрування ОС Linux', teacher: 'Яковлєва І.Д. / Лазорик В.В.', date: '25.05', time: '09:00' },
+          { subject: 'Методика викладання фахових дисциплін у вищій школі', teacher: 'Дрінь Я.М.', date: '25.05', time: '09:00' },
+          { subject: 'Технології ІоТ Blokchain', teacher: 'Іванущак Н.М.', date: '27.05', time: '09:00' },
+          { subject: 'Технології ІоТ для кіберфізичних систем', teacher: 'Воробець Г.І.', date: '27.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Комп\'ютерна інженерія',
+        code: '142б м',
+        events: [
+          { subject: 'Охорона праці в ІТ галузі', teacher: 'Ілащук М.М.', date: '27.05', time: '09:00' },
+          { subject: 'Інтелектуальна власність та патентознавство в ІТ галузі', teacher: 'Ілащук М.М.', date: '26.05', time: '09:00' },
+          { subject: 'Інтелектуальні системи прийняття рішень', teacher: 'Малик І.В.', date: '25.05', time: '09:00' },
+          { subject: 'Корпоративні архітектури програмного забезпечення', teacher: 'Томка Ю.Я.', date: '26.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Алгоритмічне та програмне забезпечення',
+        code: '141м',
+        events: [
+          { subject: 'Охорона праці в ІТ галузі', teacher: 'Ілащук М.М.', date: '26.05', time: '09:00' },
+          { subject: 'Науково-дослідна робота за темою магістерського проєкту', teacher: 'Дейбук В.Г.', date: '27.05', time: '09:00' },
+          { subject: 'Системне адміністрування ОС Linux', teacher: 'Яковлєва І.Д.', date: '25.05', time: '09:00' },
+          { subject: 'Методика викладання фахових дисциплін у вищій школі', teacher: 'Дрінь Я.М.', date: '25.05', time: '09:00' },
+          { subject: 'Методи цифрової обробки зображень', teacher: 'Баловсяк С.В.', date: '29.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Програмне забезпечення систем',
+        code: '143м',
+        events: [
+          { subject: 'Програмне забезпечення процесів управління', teacher: 'Коцур М.П.', date: '25.05', time: '09:00' },
+          { subject: 'Тест-керована розробка програмного забезпечення', teacher: 'Прохоров Г.В.', date: '29.05', time: '09:00' },
+          { subject: 'SEO оптимізація та просування', teacher: 'Карачевцев А.О.', date: '29.05', time: '09:00' },
+          { subject: 'OSINT: технологія збору та аналізу даних з відкритих джерел', teacher: 'Когут О.В.', date: '28.05', time: '09:00' },
+          { subject: 'Технології BlockChain', teacher: 'Остапов С.Е.', date: '26.05', time: '09:00' },
+          { subject: 'Квантовий комп\'ютинг', teacher: 'Остапов С.Е.', date: '26.05', time: '09:00' },
+          { subject: 'Сучасні технології програмування', teacher: 'Угрин Д.І.', date: '25.05', time: '09:00' },
+          { subject: 'Педагогіка та психологія вищої школи', teacher: 'Яцько О.М.', date: '27.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Інтелектуальний аналіз даних',
+        code: '144м',
+        events: [
+          { subject: 'Прикладна інтелектуальна обробка сигналів та зображень', teacher: 'Карачевцев А.О.', date: '26.05', time: '09:00' },
+          { subject: 'Рекомендаційні системи', teacher: 'Талах М.В.', date: '28.05', time: '09:00' },
+          { subject: 'Хмарні та розподілені технології, сервіси та обчислення', teacher: 'Горський М.П.', date: '27.05', time: '09:00' },
+          { subject: 'Курсова робота', teacher: 'Дворжак В.В.', date: '29.05', time: '09:00' },
+          { subject: 'Data Engineering', teacher: 'Ватаманіца Е.В.', date: '25.05', time: '09:00' },
+          { subject: 'Технології проєктування програмного забезпечення Інтернету речей', teacher: 'Д\'яченко Л.І.', date: '27.05', time: '09:00' },
+          { subject: 'Машинне навчання на .NET', teacher: 'Томка Ю.Я.', date: '27.05', time: '09:00' },
+          { subject: 'Аналітика продуктового ІТ', teacher: 'Комісарчук В.В.', date: '27.05', time: '09:00' },
+          { subject: 'OSINT: технологія збору та аналізу даних з відкритих джерел', teacher: 'Когут О.В.', date: '28.05', time: '09:00' },
+          { subject: 'Технології BlockChain', teacher: 'Остапов С.Е.', date: '26.05', time: '09:00' },
+          { subject: 'Квантовий комп\'ютинг', teacher: 'Остапов С.Е.', date: '26.05', time: '09:00' },
+          { subject: 'SEO оптимізація та просування', teacher: 'Карачевцев А.О.', date: '29.05', time: '09:00' },
+        ]
+      },
+      {
+        name: 'Комп\'ютерна фізика',
+        code: '114м',
+        events: [
+          { subject: 'Курсова робота по предмету "Основи штучного інтелекту та його застосування у фізичних дослідженнях"', teacher: 'Баловсяк С.В.', date: '29.05', time: '15:00' },
+          { subject: 'Інтелектуальна власність', teacher: 'Мотрич А.В.', date: '26.05', time: '15:00' },
+        ]
+      },
+      {
+        name: 'Прикладна фізика та наноматеріали',
+        code: '113м',
+        events: [
+          { subject: 'Фізичні основи нанотехнологій', teacher: 'Борча М.Д.', date: '25.05', time: '15:00' },
+          { subject: 'Методологія та методи наукових досліджень', teacher: 'Борча М.Д.', date: '27.05', time: '15:00' },
+          { subject: 'Програмування та комп\'ютерне моделювання', teacher: 'Гуцуляк І.І.', date: '28.05', time: '15:00' },
+          { subject: 'Спеціальний науковий семінар з прикладного матеріалознавства', teacher: 'Черкез Р.Г.', date: '28.05', time: '15:00' },
+          { subject: 'Термоелектричні системи охолодження', teacher: 'Прибила А.В.', date: '27.05', time: '15:00' },
+          { subject: 'Узагальнена теорія перетворення енергії', teacher: 'Черкез Р.Г.', date: '29.05', time: '15:00' },
+          { subject: 'Термоелектричні генератори', teacher: 'Константинович І.А.', date: '26.05', time: '15:00' },
+          { subject: 'Термоелектричні вимірювальні прилади', teacher: 'Кобилянський Р.Р.', date: '25.05', time: '15:00' },
+          { subject: 'Інтелектуальна власність', teacher: 'Мотрич А.В.', date: '26.05', time: '15:00' },
+        ]
+      },
+      {
+        name: 'Проф. освіта (Машинобудування)',
+        code: '116м',
+        events: [
+          { subject: 'Технології захисту поверхонь деталей машин', teacher: 'Крамар В.М.', date: '28.05', time: '15:00' },
+          { subject: 'Новітні матеріали сучасних технологій', teacher: 'Шайко-Шайковський О.Г.', date: '27.05', time: '15:00' },
+          { subject: 'Технологія технічного конструювання і моделювання', teacher: 'Ярема С.В.', date: '29.05', time: '13:00' },
+          { subject: 'Новітні конструкційні матеріали у машинобудуванні', teacher: 'Шайко-Шайковський О.Г.', date: '27.05', time: '15:00' },
+          { subject: 'Теплові процеси в технологічних системах', teacher: 'Кройтор О.П.', date: '25.05', time: '15:00' },
+          { subject: 'Інформаційно-комунікативні технології', teacher: 'Солодкий М.С.', date: '25.05', time: '13:00' },
+          { subject: 'Синергетика в освіті', teacher: 'Гудима Ю.В.', date: '26.05', time: '13:00' },
+          { subject: 'Економіка підприємств та маркетинг', teacher: 'Ксьондз С.В.', date: '29.05', time: '15:00' },
+        ]
+      },
+      {
+        name: 'Середня освіта (Технології та інформатика)',
+        code: '115м',
+        events: [
+          { subject: 'Методологія та методи наукових досліджень', teacher: 'Заплітний Р.А.', date: '27.05', time: '15:00' },
+          { subject: 'Технології захисту поверхонь деталей машин', teacher: 'Крамар В.М.', date: '28.05', time: '15:00' },
+          { subject: 'Інтернет-технології в освіті', teacher: 'Гудима Ю.В.', date: '26.05', time: '15:00' },
+          { subject: 'Технологія технічного конструювання і моделювання', teacher: 'Ярема С.В.', date: '29.05', time: '13:00' },
+          { subject: 'Синергетика в освіті', teacher: 'Гудима Ю.В.', date: '26.05', time: '13:00' },
+          { subject: 'Комунікативні процеси і партнерство у педагогічній діяльності', teacher: 'Кройтор О.П.', date: '25.05', time: '16:00' },
+          { subject: 'Методика соціально-виховної роботи в ПТНЗ', teacher: 'Томаш В.В.', date: '26.05', time: '15:00' },
+          { subject: 'Економіка підприємств та маркетинг', teacher: 'Ксьондз С.В.', date: '29.05', time: '15:00' },
+        ]
+      },
+      {
+        name: 'Відновлювані джерела енергії та гідроенергетика',
+        code: '134м',
+        events: [
+          { subject: 'Інтелектуальна власність', teacher: 'Мотрич А.В.', date: '26.05', time: '15:00' },
+          { subject: 'Технологічні методики створення нових сонячних елементів', teacher: 'Орлецький І.Г.', date: '27.05', time: '15:00' },
+          { subject: 'Фізичні методи нанесення тонких плівок для сонячних елементів', teacher: 'Орлецький І.Г.', date: '28.05', time: '15:00' },
+          { subject: 'Конструювання та проектування приладів геліоенергетики', teacher: 'Орлецький І.Г.', date: '25.05', time: '15:00' },
+        ]
+      },
+    ]
+  },
+  {
+    id: 'master2',
+    label: '2 курс Магістр',
+    sublabel: '4 семестр',
+    groups: [
+      {
+        name: 'Комп\'ютерна інженерія ІоТ та кіберфізичних систем',
+        code: '242а м',
+        events: [
+          { subject: 'Науково-дослідна практика', teacher: 'Баловсяк С.В.', date: '06.03', time: '08:00' },
+          { subject: 'Науково-виробнича практика', teacher: 'Баловсяк С.В.', date: '27.03', time: '08:00' },
+          { subject: 'Системи комп\'ютерного зору', teacher: 'Баловсяк С.В.', date: '12.03', time: '08:00' },
+          { subject: 'Cyber Security Cisco', teacher: 'Іванущак Н.М.', date: '17.03', time: '08:00' },
+        ]
+      },
+      {
+        name: 'Комп\'ютерна фізика',
+        code: '214м',
+        events: [
+          { subject: 'Промпт інженірінг для наукових досліджень', teacher: 'Борча М.Д.', date: '01.05', time: '09:00' },
+        ]
+      },
+    ]
+  },
+];
+
+// ====== HELPERS ======
+const TODAY = new Date(2026, 4, 22); // May 22 2026
+
+function parseDate(str) {
+  const [d, m] = str.split('.').map(Number);
+  return new Date(2026, m - 1, d);
+}
+
+function isToday(str) {
+  const d = parseDate(str);
+  return d.getDate() === TODAY.getDate() && d.getMonth() === TODAY.getMonth();
+}
+
+function isSoon(str) {
+  const d = parseDate(str);
+  const diff = (d - TODAY) / 86400000;
+  return diff > 0 && diff <= 3;
+}
+
+function isPast(str) {
+  return parseDate(str) < TODAY && !isToday(str);
+}
+
+function monthOf(str) {
+  return parseInt(str.split('.')[1]);
+}
+
+// ====== RENDER ======
+function buildTabs() {
+  const tabs = document.getElementById('tabs');
+  const panels = document.getElementById('panels');
+
+  SECTIONS.forEach((sec, i) => {
+    const tab = document.createElement('button');
+    tab.className = 'tab' + (i === 0 ? ' active' : '');
+    tab.dataset.id = sec.id;
+    tab.textContent = sec.label + ' · ' + sec.sublabel;
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.section-panel').forEach(p => p.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById('panel-' + sec.id).classList.add('active');
+      filterCards();
+    });
+    tabs.appendChild(tab);
+
+    const panel = document.createElement('div');
+    panel.className = 'section-panel' + (i === 0 ? ' active' : '');
+    panel.id = 'panel-' + sec.id;
+
+    sec.groups.forEach(grp => {
+      const block = document.createElement('div');
+      block.className = 'group-block';
+
+      block.innerHTML = `
+        <div class="group-header">
+          <span class="group-title">${grp.name}</span>
+          <span class="group-code">${grp.code}</span>
+          <span class="group-line"></span>
+        </div>
+        <div class="schedule-grid" id="grid-${sec.id}-${grp.code.replace(/[^a-z0-9]/gi,'_')}"></div>
+      `;
+
+      const grid = block.querySelector('.schedule-grid');
+
+      grp.events.forEach(ev => {
+        const [dd, mm] = ev.date.split('.');
+        const months = ['', 'січ', 'лют', 'бер', 'квіт', 'трав', 'черв', 'лип', 'серп', 'вер', 'жовт', 'лист', 'груд'];
+
+        const card = document.createElement('div');
+        card.className = 'event-card' + (isPast(ev.date) ? ' past-card' : '');
+        card.dataset.subject = ev.subject.toLowerCase();
+        card.dataset.teacher = ev.teacher.toLowerCase();
+        card.dataset.group = (grp.name + ' ' + grp.code).toLowerCase();
+        card.dataset.month = monthOf(ev.date);
+
+        const todayBadge = isToday(ev.date) ? '<span class="today-badge">Сьогодні</span>' : '';
+        const soonBadge = isSoon(ev.date) ? '<span class="soon-badge">Скоро</span>' : '';
+
+        card.innerHTML = `
+          <div class="event-date">
+            <div class="day">${dd}</div>
+            <div class="month">${months[parseInt(mm)]}</div>
+            <div class="time">${ev.time}</div>
+          </div>
+          <div class="event-info">
+            <div class="event-name">${ev.subject}${todayBadge}${soonBadge}</div>
+            ${ev.teacher ? `<div class="event-teacher">${ev.teacher}</div>` : ''}
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+
+      panel.appendChild(block);
+    });
+
+    panels.appendChild(panel);
+  });
+}
+
+function updateStats() {
+  let total = 0, groups = 0, today = 0, soon = 0;
+  SECTIONS.forEach(sec => {
+    sec.groups.forEach(grp => {
+      groups++;
+      grp.events.forEach(ev => {
+        total++;
+        if (isToday(ev.date)) today++;
+        if (isSoon(ev.date)) soon++;
+      });
+    });
+  });
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statGroups').textContent = groups;
+  document.getElementById('statToday').textContent = today;
+  document.getElementById('statSoon').textContent = soon;
+}
+
+function filterCards() {
+  const q = document.getElementById('search').value.toLowerCase();
+  const month = document.querySelector('.chip.active[data-month]')?.dataset.month || 'all';
+
+  const activePanel = document.querySelector('.section-panel.active');
+  if (!activePanel) return;
+
+  const cards = activePanel.querySelectorAll('.event-card');
+  let visible = 0;
+
+  cards.forEach(card => {
+    const matchQ = !q ||
+      card.dataset.subject.includes(q) ||
+      card.dataset.teacher.includes(q) ||
+      card.dataset.group.includes(q);
+    const matchM = month === 'all' || card.dataset.month === month;
+
+    if (matchQ && matchM) {
+      card.classList.remove('hidden');
+      visible++;
+    } else {
+      card.classList.add('hidden');
+    }
+  });
+
+  document.getElementById('noResults').style.display = visible === 0 ? 'block' : 'none';
+}
+
+// ====== INIT ======
+buildTabs();
+updateStats();
+
+document.getElementById('search').addEventListener('input', filterCards);
+
+document.querySelectorAll('.chip[data-month]').forEach(chip => {
+  chip.addEventListener('click', () => {
+    document.querySelectorAll('.chip[data-month]').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    filterCards();
+  });
+});
+</script>
+</body>
+</html>
